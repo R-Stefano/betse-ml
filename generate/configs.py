@@ -1,0 +1,5 @@
+defaultSimConfigFile = "./generate/default.sim_config.yml"
+
+simulation_duration_s = 10.01
+simulation_timestep = 1.0e-3
+simulation_sampling_rate = simulation_duration_s - 0.01

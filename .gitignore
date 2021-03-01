@@ -1,0 +1,4 @@
+storage/raw/*
+storage/processed/*
+generate/simulator/*
+log.txt
