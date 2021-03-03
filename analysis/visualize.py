@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import matplotlib.cm as cm
+from collections import namedtuple
 
 def pretty_patch_plot(
-    data_verts, ax, cells, um, clrmap,
+    data_verts, ax, cell_verts, um, clrmap,
     cmin=None,
     cmax=None,
     use_other_verts=None
@@ -14,14 +16,8 @@ def pretty_patch_plot(
     lovely gradient. Slow but beautiful!
 
     data:   mem midpoint data for plotting (e.g vm)
-    ax:     plot axis
-    cells:  cells object
-    p:      parameters object
-    clrmap: colormap
-    cmin, cmax   clim values for the data's colormap
-
+    ax:     plot axispretty_patch_plot
     """
-
 
     # data_verts = data
 
@@ -37,10 +33,7 @@ def pretty_patch_plot(
     # amax = amax - 0.1 * np.abs(amax)
 
     # collection of cell patchs at vertices:
-    if use_other_verts is None:
-        cell_faces = np.multiply(cells.cell_verts, um)
-    else:
-        cell_faces = np.multiply(use_other_verts, um)
+    cell_faces = np.multiply(cell_verts, um)
 
     # Cell membrane (Vmem) plotter (slow but beautiful!)
     for i in range(len(cell_faces)):
@@ -50,7 +43,7 @@ def pretty_patch_plot(
         # Average color value of each cell membrane, situated at the midpoint
         # of that membrane. This parameter is referred to as "C" in both the
         # documentation and implementation of the tripcolor() function.
-        dati = data_verts[cells.cell_to_mems[i]]
+        dati = np.repeat(data_verts[i], len(x))
 
         # "matplotlib.collections.TriMesh" instance providing the
         # Gouraud-shaded triangulation mesh for the non-triangular vertices of
@@ -65,7 +58,7 @@ def pretty_patch_plot(
 
     return col_cell, ax
 
-def plotPrettyPolyData(data, cells, clrAutoscale = True, clrMin = None, clrMax = None,
+def plotPrettyPolyData(data_verts, cells, clrAutoscale = True, clrMin = None, clrMax = None,
     clrmap = None, showCellsIdxs=False, plotIecm=False):
         """
         Assigns color-data to each polygon mem-mid, vertex and cell centre in a cell cluster
@@ -107,35 +100,15 @@ def plotPrettyPolyData(data, cells, clrAutoscale = True, clrMin = None, clrMax =
 
         um = 1000000.0
 
-        print("cells.matrixMap2Verts", cells.matrixMap2Verts.shape)
-        print("cells.cell_verts", cells.cell_verts.shape)
-        print("cells.xmin:", cells.xmin)
-        print("cells.xmax:", cells.xmax)
-        print("cells.ymin:", cells.ymin)
-        print("cells.ymax:", cells.ymax)
-
         # define the figure and axes instances
         fig = plt.figure()
         ax = plt.subplot(111)
 
-        # data processing -- map to verts:
-        data_verts = np.dot(data, cells.matrixMap2Verts)
-
         # define colorbar limits for the PolyCollection
+        maxval = data_verts.max()
+        minval = data_verts.min()
 
-        if clrAutoscale is True:
-            maxval = data_verts.max()
-            minval = data_verts.min()
-        else:
-            maxval = clrMax
-            minval = clrMin
-
-
-        # Make the polygon collection and add it to the plot.
-        if clrmap is None:
-            clrmap = p.default_cm
-
-        coll, ax = pretty_patch_plot(data_verts,ax,cells,um,clrmap, cmin=minval, cmax=maxval)
+        coll, ax = pretty_patch_plot(data_verts, ax, cells.cell_verts, um, clrmap, cmin=minval, cmax=maxval)
 
         # add a colorbar
         coll.set_clim(minval, maxval)
@@ -156,7 +129,24 @@ def plotPrettyPolyData(data, cells, clrAutoscale = True, clrMin = None, clrMax =
 
         return fig,ax,ax_cb
 
-def export_voltage_membrane(data):
+def run():
+    exampleIdx = 0
+    # Load Helper data
+    with open("storage/raw/{}/cells.pkl".format(exampleIdx), "rb") as f:
+        cells = pickle.load(f)
+
+    CellsObj = namedtuple('CellsObj', 'cell_verts xmin xmax ymin ymax')
+    cells = CellsObj(cell_verts=cells['cell_verts'], xmin=cells['xmin'], xmax=cells['xmax'], ymin=cells['ymin'], ymax=cells['ymax'])
+
+
+    # Open Vmems (ground truth)
+    x, y = np.load('storage/processed/validation/id_{}.npy'.format(exampleIdx), allow_pickle = True)
+    Vmems = y
+    print("X {} | Y {}".format(x.shape, y.shape))
+    print("Cells Verts", cells.cell_verts.shape)
+    print("Cells Vmems", Vmems.shape)
+
+
     '''
     Plot all transmembrane voltages (Vmem) for the cell cluster at the last
     time step.
@@ -166,15 +156,12 @@ def export_voltage_membrane(data):
     - conf:  SimConfExportPlotCells
     '''
 
-    showCellsIdxs = False
-    sim, cells, params = data
-
     figV, axV, cbV = plotPrettyPolyData(
-        1000 * sim.vm_time[-1],
-        cells,
-        showCellsIdxs = showCellsIdxs,
+        Vmems,
+        cells,   ###############
+        showCellsIdxs = False,
         plotIecm = True,
-        clrmap = params.default_cm,
+        clrmap = cm.RdBu_r,
         clrMin = -70.00,
         clrMax = 10.00,
     )
@@ -187,10 +174,3 @@ def export_voltage_membrane(data):
     plt.show()
     # Export this plot to disk and/or display.
     #self._export(phase=phase, basename='final_Vmem_2D')
-
-with open("sim_1.betse", "rb") as f:
-    data = pickle.load(f)
-
-print(data)
-
-export_voltage_membrane(data)

@@ -1,6 +1,6 @@
 import generate.configs as configs
 import yaml
-
+import random
 
 
 with open(configs.defaultSimConfigFile, 'r') as stream:
@@ -28,14 +28,85 @@ def sample_init_config():
 def sample_sim_config():
     '''
     Called to sample different configs for the sim phase (phase 3)
+
+    Global Interventions: 
+     - Changes to globally-applied simulation variables such as membrane permeabilities, pump and gap junction function and environmental concentrations of ions
+
+    TODO:
+     - targeted interventations
     '''
+
+    # ----------------------------------------------------
+    # GLOBAL INTERVENTIONS
+    # ----------------------------------------------------
+
+    ## Change the environmental concentration of K+
+    changeK = random.choice([True, False])
+    if (changeK):
+        int_s, int_end, freq_change, change_multiplier = sample_intervantion_params()
+        default_configs['change K env']['change start'] = int_s         # time to start change [s]
+        default_configs['change K env']['change finish'] = int_end        # time to end change and return to original [s]
+        default_configs['change K env']['change rate'] = freq_change           # rate of change [s]
+        default_configs['change K env']['multiplier'] = change_multiplier            # factor to multiply base level
+
+    default_configs['change K env']['event happens'] = changeK # turn the event on (True) or off (False)
+
+    ## Change the environmental concentration of Cl
+    changeCl = random.choice([True, False])
+    if (changeCl):
+        int_s, int_end, freq_change, change_multiplier = sample_intervantion_params()
+        default_configs['change Cl env']['change start'] = int_s           # sim time to start change [s]
+        default_configs['change Cl env']['change finish'] = int_end         # sim time to end change and return to original [s]
+        default_configs['change Cl env']['change rate'] = freq_change            # rate of change [s]
+        default_configs['change Cl env']['multiplier']= change_multiplier             # factor to multiply base level
+    default_configs['change Cl env']['event happens'] = changeCl # turn the event on (True) or off (False)
+
+    ## Change the environmental concentration of Na
+    changeNa = random.choice([True, False])
+    if (changeNa):
+        int_s, int_end, freq_change, change_multiplier = sample_intervantion_params()
+        default_configs['change Na env']['change start'] = int_s           # sim time to start change [s]
+        default_configs['change Na env']['change finish'] = int_end         # sim time to end change and return to original [s]
+        default_configs['change Na env']['change rate'] = freq_change            # rate of change [s]
+        default_configs['change Na env']['multiplier']= change_multiplier             # factor to multiply base level
+    default_configs['change Na env']['event happens'] = changeNa # turn the event on (True) or off (False)
+
+    ## Change the environmental temperature
+    changeTemp = random.choice([True, False])
+    if (changeTemp):
+        int_s, int_end, freq_change, change_multiplier = sample_intervantion_params()
+        default_configs['change temperature']['change start'] = int_s           # sim time to start change [s]
+        default_configs['change temperature']['change finish'] = int_end         # sim time to end change and return to original [s]
+        default_configs['change temperature']['change rate'] = freq_change            # rate of change [s]
+        default_configs['change temperature']['multiplier']= change_multiplier             # factor to multiply base level
+    default_configs['change temperature']['event happens'] = changeTemp # turn the event on (True) or off (False)
+
+    ## Block Gap Junctions between cells
+    blockGJ = random.choice([True, False])
+    if (blockGJ):
+        int_s, int_end, freq_change, _ = sample_intervantion_params()
+        default_configs['block gap junctions']['change start'] = int_s           # sim time to start change [s]
+        default_configs['block gap junctions']['change finish'] = int_end         # sim time to end change and return to original [s]
+        default_configs['block gap junctions']['change rate'] = freq_change            # rate of change [s]
+        default_configs['block gap junctions']['random fraction']= random.randint(0,100)          # percentage of gap junctions randomly targeted
+    default_configs['block gap junctions']['event happens'] = blockGJ # turn the event on (True) or off (False)
+
+    ## Block cells NaKATP pump
+    blockNaKATPPump = random.choice([True, False])
+    if (blockNaKATPPump):
+        int_s, int_end, freq_change, _ = sample_intervantion_params()
+        default_configs['block NaKATP pump']['change start'] = int_s           # sim time to start change [s]
+        default_configs['block NaKATP pump']['change finish'] = int_end         # sim time to end change and return to original [s]
+        default_configs['block NaKATP pump']['change rate'] = freq_change            # rate of change [s]
+    default_configs['block NaKATP pump']['event happens'] = blockNaKATPPump # turn the event on (True) or off (False)
+
     with open('./generate/simulator/sim_config.yml', 'w') as outfile:
         yaml.dump(default_configs, outfile, default_flow_style=False)
 
 
-'''
-    
-########## INTERNAL FUNCTIONS
+# --------------------------------------
+# INTERNAL FUNCTIONS
+# --------------------------------------
 def sample_intervantion_params():
     # function used to sample the interventions params fo rthe different configs
     int_s = random.sample([i for i in range(int(configs.simulation_duration_s))], 1)[0]
@@ -46,5 +117,3 @@ def sample_intervantion_params():
     change_multiplier = random.sample([0.5, 1.0, 5.0, 10.0, 20.0, 50.0, 100.0], 1)[0]
 
     return int_s, int_end, freq_change, change_multiplier
-
-'''

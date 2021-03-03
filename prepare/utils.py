@@ -1,23 +1,3 @@
-import os
-import shutil
-import numpy as np
-import pandas as pd 
-import yaml
-import sys
-import random
-random.seed(0)
-
-raw_folder = "data/raw/"
-processed_folder = "data/processed/"
-inputMaxCellsNumber = 250
-trainingSetSize = 0.7
-
-if (True):#confirm("Do you want to clean the folder?")):
-    print("Cleaning Folder")
-    shutil.rmtree(processed_folder)
-    os.makedirs(processed_folder)
-    os.makedirs(processed_folder + "train/")
-    os.makedirs(processed_folder + "validation/")
 
 def encodeConfigs(configs):
     _timestep = configs['sim time settings']['time step']
@@ -75,55 +55,3 @@ def encodeConfigs(configs):
         _block_NaKATP_pump_event_finish,
         _block_NaKATP_pump_event_change_rate
     ]
-
-dataset = os.listdir(raw_folder)
-random.shuffle(dataset)
-
-training_set = dataset[ : int(len(dataset) * trainingSetSize)]
-validation_set = dataset[int(len(dataset) * trainingSetSize) : ]
-
-
-for filenames, set_name in zip([training_set, validation_set], ['train', 'validation']):
-    for idx, folder in enumerate(filenames):
-        example = []
-
-        try:
-            inputVmem = pd.read_csv(raw_folder + folder + "/Vmem2D_0.csv")
-            outputVmem = pd.read_csv(raw_folder + folder + "/Vmem2D_1.csv")
-            with open(raw_folder + folder + '/configs.yml', 'r') as stream:
-                configs = yaml.safe_load(stream)
-        except FileNotFoundError:
-            continue
-        except:
-            print(sys.exc_info()[0])
-            continue
-
-
-        inputVmem = np.asarray(inputVmem['Vmem [mV]'])
-        outputVmem = np.asarray(outputVmem['Vmem [mV]'])
-        configs = np.asarray(encodeConfigs(configs))
-
-
-        #Pad Input
-        if (inputVmem.shape[0] < inputMaxCellsNumber):
-
-            inputVmemPad = np.zeros((inputMaxCellsNumber))
-            inputVmemPad[:inputVmem.shape[0]] = inputVmem
-            inputVmem = inputVmemPad
-
-            outputVmemPad = np.zeros((inputMaxCellsNumber))
-            outputVmemPad[:outputVmem.shape[0]] = outputVmem
-            outputVmem = outputVmemPad
-        #Discard Input
-        elif (inputVmem.shape[0] > inputMaxCellsNumber):
-            print("<<ATTENTION>> Found Input with Numbers of cells higher that current Max: {} > {}".format(inputVmem.shape[0], inputMaxCellsNumber))
-            continue
-
-
-        #print("inputVmem length: {}".format(inputVmem.shape[0]))
-        #print("Configs length: {}".format(configs.shape[0]))
-        #print("outputVmem length: {}".format(outputVmem.shape[0]))
-        example.append(np.concatenate((inputVmem, configs), axis=0))
-        example.append(outputVmem)
-
-        np.save(processed_folder + set_name + '/id_{}.npy'.format(idx) , example)
