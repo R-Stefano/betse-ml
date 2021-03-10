@@ -17,16 +17,16 @@ apply pressure:
   multiplier: 100
 automatically run initialization: true
 block NaKATP pump:
-  change finish: 7
-  change rate: 1.0
-  change start: 6
+  change finish: 5
+  change rate: 0.1
+  change start: 2
   event happens: true
 block gap junctions:
-  change finish: 9
+  change finish: 10
   change rate: 1.0
-  change start: 7
-  event happens: false
-  random fraction: 49
+  change start: 0
+  event happens: true
+  random fraction: 8
 break ecm junctions:
   apply to:
   - Spot
@@ -45,11 +45,11 @@ change Ca mem:
   modulator function: None
   multiplier: 10
 change Cl env:
-  change finish: 3
+  change finish: 10
   change rate: 0.1
-  change start: 2
-  event happens: true
-  multiplier: 1.0
+  change start: 8
+  event happens: false
+  multiplier: 0.5
 change Cl mem:
   apply to:
   - Spot
@@ -60,11 +60,11 @@ change Cl mem:
   modulator function: None
   multiplier: 10
 change K env:
-  change finish: 9
-  change rate: 0.1
-  change start: 8
-  event happens: false
-  multiplier: 50.0
+  change finish: 10
+  change rate: 5.0
+  change start: 9
+  event happens: true
+  multiplier: 0.5
 change K mem:
   apply to:
   - Spot
@@ -75,11 +75,11 @@ change K mem:
   modulator function: None
   multiplier: 50.0
 change Na env:
-  change finish: 10
-  change rate: 1.0
-  change start: 5
-  event happens: true
-  multiplier: 20.0
+  change finish: 9
+  change rate: 0.1
+  change start: 8
+  event happens: false
+  multiplier: 50.0
 change Na mem:
   apply to:
   - Spot
@@ -91,10 +91,10 @@ change Na mem:
   multiplier: 10.0
 change temperature:
   change finish: 6
-  change rate: 5.0
-  change start: 3
-  event happens: false
-  multiplier: 0.5
+  change rate: 0.5
+  change start: 4
+  event happens: true
+  multiplier: 100.0
 cutting event:
   apply to:
   - surgery
