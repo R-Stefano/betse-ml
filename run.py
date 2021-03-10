@@ -14,10 +14,24 @@ import analysis
 import sys
 
 #ENV CONFIGURATIONS
-import random
+import random, os
 random.seed(0)
 
 print(sys.argv)
+
+##################à
+#   CREATE FOLDERS
+##################
+
+if not os.path.exists('generate/simulator'):
+    os.makedirs('generate/simulator')
+
+if not os.path.exists('storage/raw'):
+    os.makedirs('storage/raw')
+
+#
+# START
+#
 
 answer = "n"# input("Start Generate Data? (y/n)")
 if (answer.lower() == "y" or 'generate' in sys.argv):
