@@ -60,7 +60,6 @@ def run():
             outputVmem = np.asarray(outputVmem['Vmem [mV]'])
             configs = np.asarray(utils.encodeConfigs(configs))
 
-
             #Pad Input
             if (inputVmem.shape[0] < inputMaxCellsNumber):
 
@@ -83,7 +82,7 @@ def run():
             example.append(np.concatenate((inputVmem, configs), axis=0))
             example.append(outputVmem)
 
-            np.save(processed_folder + set_name + '/id_{}.npy'.format(idx) , example)
+            np.save(processed_folder + set_name + '/id_{}.npy'.format(folder) , example)
 
     print("\n>> DONE")
     print(" Raw Data: {} | Train Ratio {}".format(len(dataset), trainingSetSize))

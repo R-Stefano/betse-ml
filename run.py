@@ -11,25 +11,27 @@ import generate
 import prepare
 import train
 import analysis
+import sys
 
 #ENV CONFIGURATIONS
 import random
 random.seed(0)
 
+print(sys.argv)
 
 answer = "n"# input("Start Generate Data? (y/n)")
-if (answer.lower() == "y"):
+if (answer.lower() == "y" or 'generate' in sys.argv):
     generate.run()
 
 answer = "n"# input("Start Prepare Data? (y/n)")
-if (answer.lower() == "y"):
+if (answer.lower() == "y" or 'prepare' in sys.argv):
     prepare.run()
 
 answer = "n"# input("Start Training? (y/n)")
-if (answer.lower() == "y"):
+if (answer.lower() == "y" or 'train' in sys.argv):
     train.run()
     
-answer = "y" #input("Start Visualize? (y/n)")
-if (answer.lower() == "y"):
+answer = "n" #input("Start Visualize? (y/n)")
+if (answer.lower() == "y" or 'visualize' in sys.argv):
     analysis.visualize()
     

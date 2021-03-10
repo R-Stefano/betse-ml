@@ -10,8 +10,8 @@ def run():
     '''
     '''
 
-    max_epochs = 100
-    batch_size = 8
+    max_epochs = 200
+    batch_size = 32
 
     TRAIN_FOLDER_PATH = 'storage/processed/train/'
     VAL_FOLDER_PATH = 'storage/processed/validation/'
@@ -65,8 +65,8 @@ def run():
 
         print("[EPOCH {}] train loss: {:.3f} | val loss: {:.3f}".format(epoch, training_loss, validation_loss))
 
-    torch.save(net.state_dict(), '{}model_{}.pth'.format(MODELS_ARCHIVE_FOLDER_PATH, datetime.now()))
-    torch.save(net.state_dict(), MODEL_SAVED_FOLDER_PATH) 
+    torch.save(net, '{}model_{}.pth'.format(MODELS_ARCHIVE_FOLDER_PATH, datetime.now()))
+    torch.save(net, MODEL_SAVED_FOLDER_PATH) 
 
     
 

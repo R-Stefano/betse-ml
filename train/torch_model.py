@@ -11,6 +11,8 @@ class Net(nn.Module):
             nn.Linear(size, size),
             nn.Linear(size, size),
             nn.Linear(size, size),
+            nn.Linear(size, size),
+            nn.Linear(size, size),
             nn.Linear(size, size)
         ]
 

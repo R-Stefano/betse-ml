@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import matplotlib.cm as cm
 from collections import namedtuple
+import torch
 
 def pretty_patch_plot(
     data_verts, ax, cell_verts, um, clrmap,
@@ -58,7 +59,7 @@ def pretty_patch_plot(
 
     return col_cell, ax
 
-def plotPrettyPolyData(data_verts, cells, clrAutoscale = True, clrMin = None, clrMax = None,
+def plotPrettyPolyData(VmemsGT, VmemsPred, cells, clrAutoscale = True, clrMin = None, clrMax = None,
     clrmap = None, showCellsIdxs=False, plotIecm=False):
         """
         Assigns color-data to each polygon mem-mid, vertex and cell centre in a cell cluster
@@ -101,20 +102,33 @@ def plotPrettyPolyData(data_verts, cells, clrAutoscale = True, clrMin = None, cl
         um = 1000000.0
 
         # define the figure and axes instances
-        fig = plt.figure()
-        ax = plt.subplot(111)
+        fig, (ax1, ax2) = plt.subplots(1, 2)
 
+        # Draw Ground Truth Cell Vmems
         # define colorbar limits for the PolyCollection
-        maxval = data_verts.max()
-        minval = data_verts.min()
+        maxval = VmemsGT.max()
+        minval = VmemsGT.min()
+        coll1, ax1 = pretty_patch_plot(VmemsGT, ax1, cells.cell_verts, um, clrmap, cmin=minval, cmax=maxval)
+        #coll.set_clim(clrMin, clrMax) # add a colorbar
+        #ax1_cb = fig.colorbar(coll, ax=ax1) # add a colorbar
+        #ax1_cb.set_label('Voltage mV') # add a colorbar
+        ax1.set_title('BETSE Prediction')
+        ax1.set_xlabel('Spatial distance [um]')
+        ax1.set_ylabel('Spatial distance [um]')
+        ax1.axis('equal')
 
-        coll, ax = pretty_patch_plot(data_verts, ax, cells.cell_verts, um, clrmap, cmin=minval, cmax=maxval)
+        # Draw Prediction Cell Vmems
+        maxval = VmemsPred.max()
+        minval = VmemsPred.min()
 
-        # add a colorbar
-        coll.set_clim(minval, maxval)
-        ax_cb = fig.colorbar(coll, ax=ax)
-
-        ax.axis('equal')
+        coll2, ax2 = pretty_patch_plot(VmemsPred, ax2, cells.cell_verts, um, clrmap, cmin=minval, cmax=maxval)
+        #coll.set_clim(clrMin, clrMax) # add a colorbar
+        #ax2_cb = fig.colorbar(coll, ax=ax2) # add a colorbar
+        #ax2_cb.set_label('Voltage mV')
+        ax2.set_title('ML Prediction')
+        ax2.set_xlabel('Spatial distance [um]')
+        ax2.set_ylabel('Spatial distance [um]')
+        ax2.axis('equal')
 
         if showCellsIdxs is True:
             for i,cll in enumerate(cells.cell_centres):
@@ -125,40 +139,52 @@ def plotPrettyPolyData(data_verts, cells, clrAutoscale = True, clrMin = None, cl
         ymin = cells.ymin*um
         ymax = cells.ymax*um
 
-        ax.axis([xmin,xmax,ymin,ymax])
+        ax1.axis([xmin,xmax,ymin,ymax])
+        ax2.axis([xmin,xmax,ymin,ymax])
 
-        return fig,ax,ax_cb
+        coll1.set_clim(clrMin, clrMax)
+        cb = fig.colorbar(coll1, ax=[ax1, ax2], shrink=0.75) # add a colorbar
+        cb.set_label('Voltage mV')
+
+
+        return fig
 
 def run():
-    exampleIdx = 0
+    '''
+    Plot transmembrane voltages (Vmem) for the cell cluster at the last time step.
+
+    Args:
+
+    '''
+
+    exampleIdx = 32
     # Load Helper data
     with open("storage/raw/{}/cells.pkl".format(exampleIdx), "rb") as f:
         cells = pickle.load(f)
 
     CellsObj = namedtuple('CellsObj', 'cell_verts xmin xmax ymin ymax')
     cells = CellsObj(cell_verts=cells['cell_verts'], xmin=cells['xmin'], xmax=cells['xmax'], ymin=cells['ymin'], ymax=cells['ymax'])
-
+    cellsNum = cells.cell_verts.shape[0]
 
     # Open Vmems (ground truth)
     x, y = np.load('storage/processed/validation/id_{}.npy'.format(exampleIdx), allow_pickle = True)
-    Vmems = y
+    x = x.reshape(1, -1).astype(np.float32)
+    Vmems = y[:cellsNum]
+
+    # Open Vmems (Prediction)
+    model_PATH = "storage/model.pth"
+    model = torch.load(model_PATH)
+    VmemsPred = model(torch.from_numpy(x)).cpu().detach().numpy().reshape(-1)[:cellsNum]
+
     print("X {} | Y {}".format(x.shape, y.shape))
     print("Cells Verts", cells.cell_verts.shape)
-    print("Cells Vmems", Vmems.shape)
+    print("Cells Vmems Ground Truth", Vmems.shape)
+    print("Cells Vmems Predictions", VmemsPred.shape)
 
-
-    '''
-    Plot all transmembrane voltages (Vmem) for the cell cluster at the last
-    time step.
-
-    Args:
-    - data: SimPhase
-    - conf:  SimConfExportPlotCells
-    '''
-
-    figV, axV, cbV = plotPrettyPolyData(
+    figV = plotPrettyPolyData(
         Vmems,
-        cells,   ###############
+        VmemsPred,
+        cells,
         showCellsIdxs = False,
         plotIecm = True,
         clrmap = cm.RdBu_r,
@@ -167,9 +193,7 @@ def run():
     )
 
     figV.suptitle('Final Vmem', fontsize=14, fontweight='bold')
-    axV.set_xlabel('Spatial distance [um]')
-    axV.set_ylabel('Spatial distance [um]')
-    cbV.set_label('Voltage mV')
+   
 
     plt.show()
     # Export this plot to disk and/or display.
