@@ -82,8 +82,8 @@ automatically run initialization: true     # If init file is not found, do you w
 
 init time settings:
   time step: 1.0e-2           # time step-size [s] (recommended at least 1.0e-2 or smaller)
-  total time: 5.0             # end time [s]
-  sampling rate: 1.0          # time interval to sample data [s] (at least value of time-step or larger)
+  total time: 10.0             # end time [s]
+  sampling rate: 5         # time interval to sample data [s] (at least value of time-step or larger)
 
 # --------------------------------------------------------------------------------------------------
 # SIMULATION SETTINGS
@@ -91,8 +91,8 @@ init time settings:
 
 sim time settings:
   time step: 1.0e-3    # time step-size [s] (recommended 1.0e-2 or smaller)
-  total time: 10.01      # time to end sim run [s]
-  sampling rate: 10.0   # period to sample data [s] (at least time step or larger)
+  total time: 120.0      # time to end sim run [s]
+  sampling rate: 0.5   # period to sample data [s] (at least time step or larger)
 
 # --------------------------------------------------------------------------------------------------
 # GENERAL OPTIONS
@@ -382,7 +382,7 @@ break ecm junctions:     # break extracellular junctions between cells
 # Remove all cells selected by one or more cut profiles defined above at an arbitrary
 # simulation time step. (Ignored unless at least one such profile is defined.)
 cutting event:
-  event happens: true        # enable (True) or disable (False) this event?
+  event happens: false        # enable (True) or disable (False) this event?
   apply to: [surgery]        # list of names of all cut profiles selecting cells to be removed
   break TJ: true             # break tight junctions? (otherwise assumes instant barrier healing)
   wound TJ: 1.0e-1           # how leaky are the tight junctions at the wound (max 1.0)

@@ -14,6 +14,18 @@ def sample_seed_config():
     default_configs['sim time settings']['total time'] = configs.simulation_duration_s
     default_configs['sim time settings']['sampling rate'] = configs.simulation_sampling_rate
 
+    default_configs['general options']['customized ion profile']['extracellular Na+ concentration'] = random.randint(1, 200)
+    default_configs['general options']['customized ion profile']['extracellular K+ concentration'] = random.randint(1, 200)
+    default_configs['general options']['customized ion profile']['extracellular Cl- concentration'] = random.randint(1, 200)
+    default_configs['general options']['customized ion profile']['extracellular Ca2+ concentration'] = random.randint(1, 10)
+    default_configs['general options']['customized ion profile']['extracellular protein- concentration'] = random.randint(1, 100)
+
+    default_configs['general options']['customized ion profile']['cytosolic Na+ concentration'] = random.randint(1, 200)
+    default_configs['general options']['customized ion profile']['cytosolic K+ concentration'] = random.randint(1, 200)
+    default_configs['general options']['customized ion profile']['cytosolic Cl- concentration'] = random.randint(1, 200)
+    default_configs['general options']['customized ion profile']['cytosolic Ca2+ concentration'] = random.randint(1, 10)
+    default_configs['general options']['customized ion profile']['cytosolic protein- concentration'] = random.randint(1, 200)
+
     with open('./generate/simulator/sim_config.yml', 'w') as outfile:
         yaml.dump(default_configs, outfile, default_flow_style=False)
         
@@ -21,6 +33,14 @@ def sample_init_config():
     '''
     Called to sample different configs for the init phase (phase 2)
     '''
+
+    default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_Na'] = sample_diffusion_parameter()  # Na+ membrane diffusion constant [m2/s]
+    default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_K'] = sample_diffusion_parameter()  # K+ membrane diffusion constant [m2/s]
+    default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_Cl'] = sample_diffusion_parameter()  # Cl- membrane diffusion constant [m2/s]
+    default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_Ca'] = sample_diffusion_parameter()  # Ca2+ membrane diffusion constant [m2/s]
+    default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_M'] = sample_diffusion_parameter()  # M- membrane diffusion constant [m2/s]
+    default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_P'] = sample_diffusion_parameter()  # proteins- membrane diffusion constant [m2/s]
+
     with open('./generate/simulator/sim_config.yml', 'w') as outfile:
         yaml.dump(default_configs, outfile, default_flow_style=False)
     
@@ -113,7 +133,18 @@ def sample_intervantion_params():
     max_duration = int(configs.simulation_duration_s) - int_s
     int_end = int_s + random.sample([i + 1 for i in range(max_duration)], 1)[0]
 
-    freq_change = random.sample([0.1, 0.5, 1.0, 5.0], 1)[0]
-    change_multiplier = random.sample([0.5, 1.0, 5.0, 10.0, 20.0, 50.0, 100.0], 1)[0]
+    freq_change = random.sample([0.1, 0.5, 1.0, 2.0], 1)[0]
+    change_multiplier = random.sample([0.5, 1.0, 5.0, 10.0, 20.0], 1)[0] #50.0, 100.0
 
     return int_s, int_end, freq_change, change_multiplier
+
+
+def sample_diffusion_parameter():
+    available_diffusions = [
+        0.0,
+        1.0e-18,
+        2.0e-18,
+        5.0e-18,
+        1.0e-17
+    ]
+    return random.sample(available_diffusions, 1)[0]

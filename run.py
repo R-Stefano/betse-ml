@@ -7,10 +7,6 @@ TODO:
     [FEATURES]
     - list of actions to execute. First ask all questions (like a config)
 '''
-import generate
-import prepare
-import train
-import analysis
 import sys
 
 #ENV CONFIGURATIONS
@@ -35,17 +31,21 @@ if not os.path.exists('storage/raw'):
 
 answer = "n"# input("Start Generate Data? (y/n)")
 if (answer.lower() == "y" or 'generate' in sys.argv):
+    import generate
     generate.run()
 
 answer = "n"# input("Start Prepare Data? (y/n)")
 if (answer.lower() == "y" or 'prepare' in sys.argv):
+    import prepare
     prepare.run()
 
 answer = "n"# input("Start Training? (y/n)")
 if (answer.lower() == "y" or 'train' in sys.argv):
+    import train
     train.run()
     
-answer = "n" #input("Start Visualize? (y/n)")
+answer = "y" #input("Start Visualize? (y/n)")
 if (answer.lower() == "y" or 'visualize' in sys.argv):
-    analysis.visualize()
+    import analysis
+    analysis.visualizeVmemEvolution()
     

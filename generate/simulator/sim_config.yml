@@ -17,16 +17,16 @@ apply pressure:
   multiplier: 100
 automatically run initialization: true
 block NaKATP pump:
-  change finish: 5
+  change finish: 9
   change rate: 0.1
-  change start: 2
-  event happens: true
+  change start: 8
+  event happens: false
 block gap junctions:
-  change finish: 10
-  change rate: 1.0
-  change start: 0
+  change finish: 7
+  change rate: 2.0
+  change start: 1
   event happens: true
-  random fraction: 8
+  random fraction: 38
 break ecm junctions:
   apply to:
   - Spot
@@ -45,11 +45,11 @@ change Ca mem:
   modulator function: None
   multiplier: 10
 change Cl env:
-  change finish: 10
-  change rate: 0.1
-  change start: 8
-  event happens: false
-  multiplier: 0.5
+  change finish: 6
+  change rate: 0.5
+  change start: 5
+  event happens: true
+  multiplier: 20.0
 change Cl mem:
   apply to:
   - Spot
@@ -61,10 +61,10 @@ change Cl mem:
   multiplier: 10
 change K env:
   change finish: 10
-  change rate: 5.0
+  change rate: 0.5
   change start: 9
-  event happens: true
-  multiplier: 0.5
+  event happens: false
+  multiplier: 5.0
 change K mem:
   apply to:
   - Spot
@@ -75,11 +75,11 @@ change K mem:
   modulator function: None
   multiplier: 50.0
 change Na env:
-  change finish: 9
-  change rate: 0.1
-  change start: 8
-  event happens: false
-  multiplier: 50.0
+  change finish: 10
+  change rate: 0.5
+  change start: 3
+  event happens: true
+  multiplier: 20.0
 change Na mem:
   apply to:
   - Spot
@@ -90,16 +90,16 @@ change Na mem:
   modulator function: None
   multiplier: 10.0
 change temperature:
-  change finish: 6
-  change rate: 0.5
-  change start: 4
-  event happens: true
-  multiplier: 100.0
+  change finish: 10
+  change rate: 2.0
+  change start: 8
+  event happens: false
+  multiplier: 20.0
 cutting event:
   apply to:
   - surgery
   break TJ: true
-  event happens: true
+  event happens: false
   wound TJ: 0.1
 fast solver: false
 gene regulatory network settings:
@@ -178,16 +178,16 @@ general network:
 general options:
   comp grid size: 25
   customized ion profile:
-    cytosolic Ca2+ concentration: 2.0e-05
-    cytosolic Cl- concentration: 4.0
-    cytosolic K+ concentration: 139.0
-    cytosolic Na+ concentration: 12.0
-    cytosolic protein- concentration: 135.0
-    extracellular Ca2+ concentration: 2.0
-    extracellular Cl- concentration: 115.0
-    extracellular K+ concentration: 5.0
-    extracellular Na+ concentration: 145.0
-    extracellular protein- concentration: 10.0
+    cytosolic Ca2+ concentration: 5
+    cytosolic Cl- concentration: 104
+    cytosolic K+ concentration: 125
+    cytosolic Na+ concentration: 131
+    cytosolic protein- concentration: 123
+    extracellular Ca2+ concentration: 1
+    extracellular Cl- concentration: 108
+    extracellular K+ concentration: 195
+    extracellular Na+ concentration: 99
+    extracellular protein- concentration: 34
   ion profile: basic
   simulate extracellular spaces: true
 init file saving:
@@ -195,9 +195,9 @@ init file saving:
   file: init_1.betse.gz
   worldfile: world_1.betse.gz
 init time settings:
-  sampling rate: 1.0
+  sampling rate: 5
   time step: 0.01
-  total time: 5.0
+  total time: 10.0
 internal parameters:
   Do_Ca: 1.0e-10
   Do_Cl: 2.03e-09
@@ -359,7 +359,7 @@ sim file saving:
   directory: SIMS
   file: sim_1.betse.gz
 sim time settings:
-  sampling rate: 10.0
+  sampling rate: 5
   time step: 0.001
   total time: 10.01
 solver options:
@@ -372,12 +372,12 @@ tissue profile definition:
   tissue:
     default:
       diffusion constants:
-        Dm_Ca: 1.0e-18
+        Dm_Ca: 1.0e-17
         Dm_Cl: 1.0e-18
-        Dm_K: 1.0e-18
+        Dm_K: 1.0e-17
         Dm_M: 1.0e-18
         Dm_Na: 2.0e-18
-        Dm_P: 0.0
+        Dm_P: 2.0e-18
       image: geo/circle/circle_base.png
       name: Base
     profiles:
