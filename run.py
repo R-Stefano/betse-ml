@@ -46,6 +46,8 @@ if (answer.lower() == "y" or 'train' in sys.argv):
     
 answer = "y" #input("Start Visualize? (y/n)")
 if (answer.lower() == "y" or 'visualize' in sys.argv):
+    import train#.torch_model as model
+
     import analysis
-    analysis.visualizeVmemEvolution()
+    analysis.run()
     

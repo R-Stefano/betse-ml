@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import matplotlib.cm as cm
 from collections import namedtuple
-import torch
+import os
 
 def pretty_patch_plot(
     data_verts, ax, cell_verts, um, clrmap,
@@ -149,52 +149,55 @@ def plotPrettyPolyData(VmemsGT, VmemsPred, cells, clrAutoscale = True, clrMin = 
 
         return fig
 
-def run():
+def run(exampleIDs):
     '''
     Plot transmembrane voltages (Vmem) for the cell cluster at the last time step.
 
     Args:
 
     '''
+    import torch
+    import train.torch_model as modelClass 
+    # Open Vmems (Prediction)
+    model_PATH = "storage/model.pth"
+    model = modelClass.Net(298, 250)
+    #model = torch.load(model_PATH)
+    model.load_state_dict(torch.load(model_PATH))
 
-    exampleIdx = 32
     # Load Helper data
-    with open("storage/raw/{}/cells.pkl".format(exampleIdx), "rb") as f:
+    with open("storage/validation/cells.pkl".format(), "rb") as f:
         cells = pickle.load(f)
 
     CellsObj = namedtuple('CellsObj', 'cell_verts xmin xmax ymin ymax')
     cells = CellsObj(cell_verts=cells['cell_verts'], xmin=cells['xmin'], xmax=cells['xmax'], ymin=cells['ymin'], ymax=cells['ymax'])
     cellsNum = cells.cell_verts.shape[0]
 
-    # Open Vmems (ground truth)
-    x, y = np.load('storage/processed/validation/id_{}.npy'.format(exampleIdx), allow_pickle = True)
-    x = x.reshape(1, -1).astype(np.float32)
-    Vmems = y[:cellsNum]
+    for exampleID in exampleIDs:
+        # Open Vmems (ground truth)
+        x, y = np.load('storage/validation/{}.npy'.format(exampleID), allow_pickle = True)
+        x = x.reshape(1, -1).astype(np.float32)
+        Vmems = y[:cellsNum]
+        VmemsPred = model(torch.from_numpy(x)).cpu().detach().numpy().reshape(-1)[:cellsNum]
 
-    # Open Vmems (Prediction)
-    model_PATH = "storage/model.pth"
-    model = torch.load(model_PATH)
-    VmemsPred = model(torch.from_numpy(x)).cpu().detach().numpy().reshape(-1)[:cellsNum]
+        print("X {} | Y {}".format(x.shape, y.shape))
+        print("Cells Verts", cells.cell_verts.shape)
+        print("Cells Vmems Ground Truth", Vmems.shape)
+        print("Cells Vmems Predictions", VmemsPred.shape)
 
-    print("X {} | Y {}".format(x.shape, y.shape))
-    print("Cells Verts", cells.cell_verts.shape)
-    print("Cells Vmems Ground Truth", Vmems.shape)
-    print("Cells Vmems Predictions", VmemsPred.shape)
+        figV = plotPrettyPolyData(
+            Vmems,
+            VmemsPred,
+            cells,
+            showCellsIdxs = False,
+            plotIecm = True,
+            clrmap = cm.RdBu_r,
+            clrMin = -70.00,
+            clrMax = 10.00,
+        )
 
-    figV = plotPrettyPolyData(
-        Vmems,
-        VmemsPred,
-        cells,
-        showCellsIdxs = False,
-        plotIecm = True,
-        clrmap = cm.RdBu_r,
-        clrMin = -70.00,
-        clrMax = 10.00,
-    )
+        figV.suptitle('Final Vmem', fontsize=14, fontweight='bold')
+    
 
-    figV.suptitle('Final Vmem', fontsize=14, fontweight='bold')
-   
-
-    plt.show()
-    # Export this plot to disk and/or display.
-    #self._export(phase=phase, basename='final_Vmem_2D')
+        #plt.show()
+        plt.savefig('analysis/data/visualize/vmem_visualize_{}.png'.format(exampleID))
+        plt.cla()
