@@ -1,7 +1,9 @@
 storage/raw/*
 storage/processed/*
 storage/model_versions/*
+storage/validation/*
 generate/simulator/INITS/*
 generate/simulator/RESULTS/*
 generate/simulator/SIMS/*
 log.txt
+

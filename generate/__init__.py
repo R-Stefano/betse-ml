@@ -2,6 +2,7 @@ import os, yaml,random, time, gzip, pickle, uuid
 import generate.simApi as simApi
 import generate.configs as configs
 from google.cloud import storage
+import pandas as pd
 storage_client = storage.Client()
 bucket = storage_client.bucket(configs.bucketName)
 
@@ -42,8 +43,12 @@ def run():
             # 
             # Config BETSE Simulation Environment (seed phase)
             #
+
+            simApi.init()
             run_start = time.time()
-            simApi.sample_seed_config()
+            if (configs.sampleSeedPhase):
+                simApi.sample_seed_config()
+
             os.system('betse seed generate/simulator/sim_config.yml')
             logger.write(">>SEED: took {:.2f} s\n".format(time.time() - run_start))
 
@@ -51,7 +56,8 @@ def run():
             # INITIALIZATION
             #
             init_start = time.time()
-            simApi.sample_init_config()
+            if (configs.sampleInitPhase):
+                simApi.sample_init_config()
             os.system('betse init generate/simulator/sim_config.yml')
             logger.write(">>INIT: took {:.2f} s\n".format(time.time() - init_start))
 
@@ -69,7 +75,7 @@ def run():
                     os.system('betse sim generate/simulator/sim_config.yml')
                     os.system('betse plot sim generate/simulator/sim_config.yml') # Save sim results
                 except:
-                    print("\n\nHELLOOO SIMUATION FAILED PORCODIO\n\n")
+                    print("\n\n<<SIMUATION FAILED>>\n\n")
                 #
                 # Generate folder to store data for the current ended Run.
                 #
@@ -97,9 +103,40 @@ def run():
                 if (RUNS <= 0):
                     break
 
+def test():
+    import numpy as np
+    import analysis.visualize as vis
+    import matplotlib.pyplot as plt
+    from collections import namedtuple
+
+    configs.SIM_RUNS = 1
+    configs.MIN_SIM_RUNS = 5
+    configs.MAX_SIM_RUNS = 6
+    configs.simulation_duration_s = 10.01 # 60.0
+    configs.useCloud = False
+    configs.sampleSeedPhase = False
+    configs.sampleInitPhase = True
+    configs.interventionTypes = ['Na']
+    configs.targetedInterventions = False
+    configs.globalInterventions = False
+
+    run()
+    for folderName in os.listdir('storage/raw/'):
+        Vmems = np.asarray(pd.read_csv('storage/raw/' + folderName + '/Vmem2D_0.csv')['Vmem [mV]'])
+        VmemsPred = np.asarray(pd.read_csv('storage/raw/' + folderName + '/Vmem2D_2.csv')['Vmem [mV]'])
+        with open("storage/raw/" + folderName + "/cells.pkl".format(), "rb") as f:
+            cells = pickle.load(f)
+        CellsObj = namedtuple('CellsObj', 'cell_verts xmin xmax ymin ymax')
+        cells = CellsObj(cell_verts=cells['cell_verts'], xmin=cells['xmin'], xmax=cells['xmax'], ymin=cells['ymin'], ymax=cells['ymax'])
+        cellsNum = cells.cell_verts.shape[0]
+
+        vis.display(Vmems, VmemsPred, cells)
+        #plt.show()
+        plt.savefig("storage/raw/" + folderName + '/vmems.png')
+
 
 def _save(source_filename, destination_filename):
-    useCloud = True
+    useCloud = configs.useCloud
     if (useCloud):
         blob = bucket.blob(destination_filename)
         blob.upload_from_filename(source_filename)

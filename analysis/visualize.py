@@ -149,6 +149,20 @@ def plotPrettyPolyData(VmemsGT, VmemsPred, cells, clrAutoscale = True, clrMin = 
 
         return fig
 
+def display(Vmems, VmemsPred, cells):
+    figV = plotPrettyPolyData(
+        Vmems,
+        VmemsPred,
+        cells,
+        showCellsIdxs = False,
+        plotIecm = True,
+        clrmap = cm.RdBu_r,
+        clrMin = -70.00,
+        clrMax = 10.00,
+    )
+
+    figV.suptitle('Final Vmem', fontsize=14, fontweight='bold')
+
 def run(exampleIDs):
     '''
     Plot transmembrane voltages (Vmem) for the cell cluster at the last time step.
@@ -184,18 +198,7 @@ def run(exampleIDs):
         print("Cells Vmems Ground Truth", Vmems.shape)
         print("Cells Vmems Predictions", VmemsPred.shape)
 
-        figV = plotPrettyPolyData(
-            Vmems,
-            VmemsPred,
-            cells,
-            showCellsIdxs = False,
-            plotIecm = True,
-            clrmap = cm.RdBu_r,
-            clrMin = -70.00,
-            clrMax = 10.00,
-        )
-
-        figV.suptitle('Final Vmem', fontsize=14, fontweight='bold')
+        display(Vmems, VmemsPred, cells)
     
 
         #plt.show()

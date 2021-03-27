@@ -43,10 +43,10 @@ def run():
                 examplesIDs.append(f.split(".")[0])
         print(len(examplesIDs))
 
-    #visualize(examplesIDs)
+    #visualizeVmems(examplesIDs)
     validate(examplesIDs)
 
-def visualize(exampleIDs):
+def visualizeVmems(exampleIDs):
     '''
 
     '''
@@ -120,7 +120,6 @@ def validate(exampleIDs):
     sns_plot.savefig("analysis/data/validate/vmems_predicted_vs_true_ranged_100mV.png")
 
     print(">> Predicts Accuracy Different Thresholds")
-    # cells matching (distance below 1 mV)
     data = {
         'ID': [i for i in range(50)],
         'threshold': [i for i in range(50)],
