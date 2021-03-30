@@ -87,19 +87,7 @@ def run():
                     _save(BETSE_SIM_VMEM_RESULTS + sample_filename, run_directory + sample_filename)
                 ### 2. Save Config yaml file
                 _save(BETSE_SIM_RESULTS_PATH + 'sim_config.yml', run_directory + 'configs.yml')
-                ### 3. Save cells verts
-                '''
-                PROBABLY TO REMOVE THIS
-                '''
-                with gzip.open(BETSE_SIM_RESULTS_PATH + "SIMS/sim_1.betse.gz", "rb") as f:
-                    sim, cells, params = pickle.load(f)
-
-                with open(BETSE_SIM_RESULTS_PATH + 'SIMS/cells.pkl', 'wb') as fp:
-                    pickle.dump({'cell_verts': cells.cell_verts, 'xmin': cells.xmin, 'xmax': cells.xmax, 'ymin': cells.ymin, 'ymax': cells.ymax}, fp)
-                _save(BETSE_SIM_RESULTS_PATH + 'SIMS/cells.pkl', run_directory + 'cells.pkl')
-                '''
-                PROBABLY TO REMOVE THIS
-                '''
+                ### 3. Save cells data
                 _save(BETSE_SIM_RESULTS_PATH + 'SIMS/sim_1.betse.gz', run_directory + 'sim_1.betse.gz')
 
                 logger.write(">>SIMU: took: {:.2f} s\n".format(time.time() - sim_start))
