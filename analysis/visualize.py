@@ -108,11 +108,11 @@ def plotPrettyPolyData(VmemsGT, VmemsPred, cells, clrAutoscale = True, clrMin = 
         # define colorbar limits for the PolyCollection
         maxval = VmemsGT.max()
         minval = VmemsGT.min()
-        coll1, ax1 = pretty_patch_plot(VmemsGT, ax1, cells.cell_verts, um, clrmap, cmin=minval, cmax=maxval)
+        coll1, ax1 = pretty_patch_plot(VmemsGT, ax1, cells.cell_verts, um, clrmap, cmin=clrMin, cmax=clrMax)
         #coll.set_clim(clrMin, clrMax) # add a colorbar
         #ax1_cb = fig.colorbar(coll, ax=ax1) # add a colorbar
         #ax1_cb.set_label('Voltage mV') # add a colorbar
-        ax1.set_title('BETSE Prediction')
+        ax1.set_title('Simulation Start')#('BETSE Prediction')
         ax1.set_xlabel('Spatial distance [um]')
         ax1.set_ylabel('Spatial distance [um]')
         ax1.axis('equal')
@@ -121,11 +121,11 @@ def plotPrettyPolyData(VmemsGT, VmemsPred, cells, clrAutoscale = True, clrMin = 
         maxval = VmemsPred.max()
         minval = VmemsPred.min()
 
-        coll2, ax2 = pretty_patch_plot(VmemsPred, ax2, cells.cell_verts, um, clrmap, cmin=minval, cmax=maxval)
+        coll2, ax2 = pretty_patch_plot(VmemsPred, ax2, cells.cell_verts, um, clrmap, cmin=clrMin, cmax=clrMax)
         #coll.set_clim(clrMin, clrMax) # add a colorbar
         #ax2_cb = fig.colorbar(coll, ax=ax2) # add a colorbar
         #ax2_cb.set_label('Voltage mV')
-        ax2.set_title('ML Prediction')
+        ax2.set_title('Simulation End')#('ML Prediction')
         ax2.set_xlabel('Spatial distance [um]')
         ax2.set_ylabel('Spatial distance [um]')
         ax2.axis('equal')
@@ -157,8 +157,8 @@ def display(Vmems, VmemsPred, cells):
         showCellsIdxs = False,
         plotIecm = True,
         clrmap = cm.RdBu_r,
-        clrMin = -70.00,
-        clrMax = 10.00,
+        clrMin =  -70.00,
+        clrMax =  10.00,
     )
 
     figV.suptitle('Final Vmem', fontsize=14, fontweight='bold')

@@ -88,12 +88,19 @@ def run():
                 ### 2. Save Config yaml file
                 _save(BETSE_SIM_RESULTS_PATH + 'sim_config.yml', run_directory + 'configs.yml')
                 ### 3. Save cells verts
+                '''
+                PROBABLY TO REMOVE THIS
+                '''
                 with gzip.open(BETSE_SIM_RESULTS_PATH + "SIMS/sim_1.betse.gz", "rb") as f:
                     sim, cells, params = pickle.load(f)
 
                 with open(BETSE_SIM_RESULTS_PATH + 'SIMS/cells.pkl', 'wb') as fp:
                     pickle.dump({'cell_verts': cells.cell_verts, 'xmin': cells.xmin, 'xmax': cells.xmax, 'ymin': cells.ymin, 'ymax': cells.ymax}, fp)
                 _save(BETSE_SIM_RESULTS_PATH + 'SIMS/cells.pkl', run_directory + 'cells.pkl')
+                '''
+                PROBABLY TO REMOVE THIS
+                '''
+                _save(BETSE_SIM_RESULTS_PATH + 'SIMS/sim_1.betse.gz', run_directory + 'sim_1.betse.gz')
 
                 logger.write(">>SIMU: took: {:.2f} s\n".format(time.time() - sim_start))
 
@@ -109,26 +116,36 @@ def test():
     import matplotlib.pyplot as plt
     from collections import namedtuple
 
-    configs.SIM_RUNS = 1
-    configs.MIN_SIM_RUNS = 5
-    configs.MAX_SIM_RUNS = 6
+    configs.SIM_RUNS = 100
+    configs.MIN_SIM_RUNS = 3
+    configs.MAX_SIM_RUNS = 5
+    configs.initialization_duration_s = 10.01 # 60.0
     configs.simulation_duration_s = 10.01 # 60.0
     configs.useCloud = False
     configs.sampleSeedPhase = False
     configs.sampleInitPhase = True
-    configs.interventionTypes = ['Na']
-    configs.targetedInterventions = False
+    configs.interventionTypes = ['Na'] # ['Na', 'K']
+    configs.targetedInterventions = True
     configs.globalInterventions = False
 
     run()
     for folderName in os.listdir('storage/raw/'):
-        Vmems = np.asarray(pd.read_csv('storage/raw/' + folderName + '/Vmem2D_0.csv')['Vmem [mV]'])
+        Vmems = np.asarray(pd.read_csv('storage/raw/' + folderName + '/Vmem2D_1.csv')['Vmem [mV]'])
         VmemsPred = np.asarray(pd.read_csv('storage/raw/' + folderName + '/Vmem2D_2.csv')['Vmem [mV]'])
         with open("storage/raw/" + folderName + "/cells.pkl".format(), "rb") as f:
             cells = pickle.load(f)
         CellsObj = namedtuple('CellsObj', 'cell_verts xmin xmax ymin ymax')
         cells = CellsObj(cell_verts=cells['cell_verts'], xmin=cells['xmin'], xmax=cells['xmax'], ymin=cells['ymin'], ymax=cells['ymax'])
         cellsNum = cells.cell_verts.shape[0]
+
+        with open('storage/raw/' + folderName + '/configs.yml', 'r') as stream:
+            default_configs = yaml.safe_load(stream)
+
+        vmems = np.concatenate((Vmems, VmemsPred), axis=0)
+        for memPerm in default_configs['tissue profile definition']['tissue']['profiles'][0]['diffusion constants']:
+            memPermValue = default_configs['tissue profile definition']['tissue']['profiles'][0]['diffusion constants'][memPerm]
+            if (memPermValue not in [0, 1.0e-17]):
+                print("{} = {} | {:.4f} - {:.4f}".format(memPerm, memPermValue, np.min(vmems), np.max(vmems)))
 
         vis.display(Vmems, VmemsPred, cells)
         #plt.show()
