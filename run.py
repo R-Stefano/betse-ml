@@ -2,12 +2,14 @@
 This is the main file where the program starts
 
 TODO:
-    - 
+    - simulation recording only 5.0s and 10.0s. Need 0.0s or something like that
     
     [FEATURES]
     - list of actions to execute. First ask all questions (like a config)
 '''
 import sys
+
+sys.path.append("./betse/")
 
 #ENV CONFIGURATIONS
 import random, os
@@ -40,7 +42,10 @@ if (answer.lower() == "y" or 'generate' in sys.argv):
 answer = "n"# input("Start Prepare Data? (y/n)")
 if (answer.lower() == "y" or 'prepare' in sys.argv):
     import prepare
-    prepare.run()
+    if ('analyze' in sys.argv):
+        prepare.analyze()
+    else:
+        prepare.run()
 
 answer = "n"# input("Start Training? (y/n)")
 if (answer.lower() == "y" or 'train' in sys.argv):

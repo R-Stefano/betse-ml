@@ -4,6 +4,7 @@ import pickle
 import matplotlib.cm as cm
 from collections import namedtuple
 import os
+import analysis.configs as configs
 
 def pretty_patch_plot(
     data_verts, ax, cell_verts, um, clrmap,
@@ -102,7 +103,7 @@ def plotPrettyPolyData(VmemsGT, VmemsPred, cells, clrAutoscale = True, clrMin = 
         um = 1000000.0
 
         # define the figure and axes instances
-        fig, (ax1, ax2) = plt.subplots(1, 2)
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
 
         # Draw Ground Truth Cell Vmems
         # define colorbar limits for the PolyCollection
@@ -112,7 +113,7 @@ def plotPrettyPolyData(VmemsGT, VmemsPred, cells, clrAutoscale = True, clrMin = 
         #coll.set_clim(clrMin, clrMax) # add a colorbar
         #ax1_cb = fig.colorbar(coll, ax=ax1) # add a colorbar
         #ax1_cb.set_label('Voltage mV') # add a colorbar
-        ax1.set_title('Simulation Start')#('BETSE Prediction')
+        ax1.set_title('BETSE Prediction')#('Simulation Start')#('BETSE Prediction')
         ax1.set_xlabel('Spatial distance [um]')
         ax1.set_ylabel('Spatial distance [um]')
         ax1.axis('equal')
@@ -125,7 +126,7 @@ def plotPrettyPolyData(VmemsGT, VmemsPred, cells, clrAutoscale = True, clrMin = 
         #coll.set_clim(clrMin, clrMax) # add a colorbar
         #ax2_cb = fig.colorbar(coll, ax=ax2) # add a colorbar
         #ax2_cb.set_label('Voltage mV')
-        ax2.set_title('Simulation End')#('ML Prediction')
+        ax2.set_title('ML Prediction')#('Simulation End')#('ML Prediction')
         ax2.set_xlabel('Spatial distance [um]')
         ax2.set_ylabel('Spatial distance [um]')
         ax2.axis('equal')
@@ -173,34 +174,37 @@ def run(exampleIDs):
     import torch
     import train.torch_model as modelClass 
     # Open Vmems (Prediction)
-    model_PATH = "storage/model.pth"
-    model = modelClass.Net(298, 250)
+    model_PATH = "storage/" + configs.modelName
+    #model = modelClass.Net(280, 250)
+    model = modelClass.RNNNet(5, 30)
     #model = torch.load(model_PATH)
     model.load_state_dict(torch.load(model_PATH))
 
     # Load Helper data
-    with open("storage/validation/cells.pkl".format(), "rb") as f:
-        cells = pickle.load(f)
+    with open("storage/data.betse", "rb") as f:
+        sim, cells, _ = pickle.load(f)
 
-    CellsObj = namedtuple('CellsObj', 'cell_verts xmin xmax ymin ymax')
-    cells = CellsObj(cell_verts=cells['cell_verts'], xmin=cells['xmin'], xmax=cells['xmax'], ymin=cells['ymin'], ymax=cells['ymax'])
     cellsNum = cells.cell_verts.shape[0]
 
     for exampleID in exampleIDs:
         # Open Vmems (ground truth)
-        x, y = np.load('storage/validation/{}.npy'.format(exampleID), allow_pickle = True)
-        x = x.reshape(1, -1).astype(np.float32)
-        Vmems = y[:cellsNum]
-        VmemsPred = model(torch.from_numpy(x)).cpu().detach().numpy().reshape(-1)[:cellsNum]
+        x, confs, y = np.load('storage/validation/{}.npy'.format(exampleID), allow_pickle = True)
+        x = np.expand_dims(x, axis=0).astype(np.float32) 
+        confs = np.expand_dims(confs, axis=0).astype(np.float32) 
+        x = torch.from_numpy(x / 100)
+        confs = torch.from_numpy(confs)
 
-        print("X {} | Y {}".format(x.shape, y.shape))
-        print("Cells Verts", cells.cell_verts.shape)
-        print("Cells Vmems Ground Truth", Vmems.shape)
-        print("Cells Vmems Predictions", VmemsPred.shape)
+        Vmems = y[:cellsNum]
+        VmemsPred = model(x, confs).cpu().detach().numpy().reshape(-1)[:cellsNum] * 100
+
+        #print("X {} | Y {}".format(x.shape, y.shape))
+        #print("Cells Verts", cells.cell_verts.shape)
+        #print("Cells Vmems Ground Truth", Vmems.shape)
+        #print("Cells Vmems Predictions", VmemsPred.shape)
 
         display(Vmems, VmemsPred, cells)
     
 
         #plt.show()
-        plt.savefig('analysis/data/visualize/vmem_visualize_{}.png'.format(exampleID))
+        plt.savefig('analysis/{}/visualize/vmem_visualize_{}.png'.format(configs.resultsFolder, exampleID))
         plt.cla()

@@ -23,15 +23,19 @@ def sample_seed_config():
     Called to sample different configs for the seed phase (phase 1)
     '''
 
-    print("CHANGING CONCENTRATIONS")
-    default_configs['general options']['customized ion profile']['extracellular Na+ concentration'] =  1 #random.randint(1, 200)
-    default_configs['general options']['customized ion profile']['extracellular K+ concentration'] =  200.0 #random.randint(1, 200)
+    extracellularNaConcentration = 1.0 #random.randint(1, 200)
+    extracellularKConcentration = 1.0 #random.randint(1, 200)
+    cytosolicNaConcentrationRatio = 200.0
+    cytosolicKConcentrationRatio = 1.0
+
+    default_configs['general options']['customized ion profile']['extracellular Na+ concentration'] =  extracellularNaConcentration 
+    default_configs['general options']['customized ion profile']['extracellular K+ concentration'] =  extracellularKConcentration
     default_configs['general options']['customized ion profile']['extracellular Cl- concentration'] =  1 #105.0 #random.randint(1, 200)
     default_configs['general options']['customized ion profile']['extracellular Ca2+ concentration'] =  1 #random.randint(1, 10)
-    default_configs['general options']['customized ion profile']['extracellular protein- concentration'] =  10.0
+    default_configs['general options']['customized ion profile']['extracellular protein- concentration'] =  80.0
 
-    default_configs['general options']['customized ion profile']['cytosolic Na+ concentration'] = 1 #random.randint(1, 200)
-    default_configs['general options']['customized ion profile']['cytosolic K+ concentration'] = 1.0 #random.randint(1, 200)
+    default_configs['general options']['customized ion profile']['cytosolic Na+ concentration'] = extracellularNaConcentration *  cytosolicNaConcentrationRatio
+    default_configs['general options']['customized ion profile']['cytosolic K+ concentration'] = extracellularKConcentration * cytosolicKConcentrationRatio
     default_configs['general options']['customized ion profile']['cytosolic Cl- concentration'] = 1 #random.randint(1, 200)
     default_configs['general options']['customized ion profile']['cytosolic Ca2+ concentration'] = 1 #random.randint(1, 10)
     default_configs['general options']['customized ion profile']['cytosolic protein- concentration'] = 80.0
@@ -54,9 +58,10 @@ def sample_init_config():
     '''
 
     defaultVmemPerm = sample_diffusion_parameter()
-    defaultNaVmemPerm = defaultVmemPerm * random.uniform(0.5, 0.9)
+    defaultNaVmemPerm = defaultVmemPerm * 0.1 #* random.uniform(0.5, 0.9)
+    defaultKVmemPerm = defaultVmemPerm  #* random.uniform(0.5, 0.9)
     default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_Na'] = defaultNaVmemPerm  # Na+ membrane diffusion constant [m2/s]
-    default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_K'] =  defaultVmemPerm    # K+ membrane diffusion constant [m2/s]
+    default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_K'] =  defaultKVmemPerm    # K+ membrane diffusion constant [m2/s]
     default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_Cl'] = defaultVmemPerm    # Cl- membrane diffusion constant [m2/s]
     default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_Ca'] = defaultVmemPerm    # Ca2+ membrane diffusion constant [m2/s]
     default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_M'] =  defaultVmemPerm 
@@ -87,7 +92,7 @@ def sample_init_config():
         'insular': False,
         'diffusion constants': {
             'Dm_Na': defaultNaVmemPerm,     # Na+ membrane diffusion constant [m2/s]
-            'Dm_K':  defaultVmemPerm,      # K+ membrane diffusion constant [m2/s]
+            'Dm_K':  defaultKVmemPerm,      # K+ membrane diffusion constant [m2/s]
             'Dm_Cl': defaultVmemPerm,     # Cl- membrane diffusion constant [m2/s]
             'Dm_Ca': defaultVmemPerm,     # Ca2+ membrane diffusion constant [m2/s]
             'Dm_M':  defaultVmemPerm,      # M- membrane diffusion constant [m2/s]
@@ -99,13 +104,15 @@ def sample_init_config():
     multipliers = [i + 1 for i in range(20)]
     if (vmemState == "depolarization"):
         poolDepolarizations = []
-        for membraneType in ['Dm_Na', 'Dm_K']:
+        for membraneType in ['Dm_Cl']:#['Dm_Na', 'Dm_K']:
             for multiplier in multipliers:
-                if (membraneType == "Dm_K"):
+                if (membraneType in ["Dm_K", 'Dm_Cl']):
+                    #CLOSE
                     poolDepolarizations.append({
                         membraneType: profile['diffusion constants'][membraneType] / multiplier
                     })
                 else:
+                    #OPEN
                     poolDepolarizations.append({
                         membraneType: profile['diffusion constants'][membraneType] * multiplier
                     })

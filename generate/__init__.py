@@ -49,7 +49,7 @@ def run():
             if (configs.sampleSeedPhase):
                 simApi.sample_seed_config()
 
-            os.system('betse seed generate/simulator/sim_config.yml')
+            os.system('python3 betse/__main__.py seed generate/simulator/sim_config.yml')
             logger.write(">>SEED: took {:.2f} s\n".format(time.time() - run_start))
 
             #
@@ -58,7 +58,7 @@ def run():
             init_start = time.time()
             if (configs.sampleInitPhase):
                 simApi.sample_init_config()
-            os.system('betse init generate/simulator/sim_config.yml')
+            os.system('python3 betse/__main__.py init generate/simulator/sim_config.yml')
             logger.write(">>INIT: took {:.2f} s\n".format(time.time() - init_start))
 
             #
@@ -104,26 +104,26 @@ def test():
     import matplotlib.pyplot as plt
     from collections import namedtuple
 
-    configs.SIM_RUNS = 100
+    configs.SIM_RUNS = 1
     configs.MIN_SIM_RUNS = 3
     configs.MAX_SIM_RUNS = 5
     configs.initialization_duration_s = 10.01 # 60.0
     configs.simulation_duration_s = 10.01 # 60.0
     configs.useCloud = False
-    configs.sampleSeedPhase = False
+    configs.sampleSeedPhase = True
     configs.sampleInitPhase = True
     configs.interventionTypes = ['Na'] # ['Na', 'K']
-    configs.targetedInterventions = True
+    configs.targetedInterventions = False
     configs.globalInterventions = False
 
     run()
     for folderName in os.listdir('storage/raw/'):
-        Vmems = np.asarray(pd.read_csv('storage/raw/' + folderName + '/Vmem2D_1.csv')['Vmem [mV]'])
+        print(folderName)
+        Vmems = np.asarray(pd.read_csv('storage/raw/' + folderName + '/Vmem2D_0.csv')['Vmem [mV]'])
         VmemsPred = np.asarray(pd.read_csv('storage/raw/' + folderName + '/Vmem2D_2.csv')['Vmem [mV]'])
-        with open("storage/raw/" + folderName + "/cells.pkl".format(), "rb") as f:
-            cells = pickle.load(f)
-        CellsObj = namedtuple('CellsObj', 'cell_verts xmin xmax ymin ymax')
-        cells = CellsObj(cell_verts=cells['cell_verts'], xmin=cells['xmin'], xmax=cells['xmax'], ymin=cells['ymin'], ymax=cells['ymax'])
+
+        with gzip.open("storage/raw/" + folderName + "/sim_1.betse.gz", "rb") as f:
+            sim, cells, params = pickle.load(f)
         cellsNum = cells.cell_verts.shape[0]
 
         with open('storage/raw/' + folderName + '/configs.yml', 'r') as stream:
