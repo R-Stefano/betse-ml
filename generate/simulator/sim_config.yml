@@ -68,12 +68,12 @@ change K env:
 change K mem:
   apply to:
   - Spot
-  change finish: 2.0
+  change finish: 28
   change rate: 0.5
-  change start: 1.0
-  event happens: false
+  change start: 26
+  event happens: true
   modulator function: None
-  multiplier: 50.0
+  multiplier: 25.0
 change Na env:
   change finish: 9
   change rate: 1
@@ -83,12 +83,12 @@ change Na env:
 change Na mem:
   apply to:
   - Spot
-  change finish: 19
-  change rate: 0.5
-  change start: 18
-  event happens: true
+  change finish: 4.0
+  change rate: 1.0
+  change start: 1.0
+  event happens: false
   modulator function: None
-  multiplier: 1.0
+  multiplier: 10.0
 change temperature:
   change finish: 9
   change rate: 0.5
@@ -180,13 +180,13 @@ general options:
   customized ion profile:
     cytosolic Ca2+ concentration: 1
     cytosolic Cl- concentration: 1
-    cytosolic K+ concentration: 1211
-    cytosolic Na+ concentration: 91000000
+    cytosolic K+ concentration: 17.444444444444443
+    cytosolic Na+ concentration: 9.600000000000001
     cytosolic protein- concentration: 80.0
     extracellular Ca2+ concentration: 1
     extracellular Cl- concentration: 1
-    extracellular K+ concentration: 173
-    extracellular Na+ concentration: 91
+    extracellular K+ concentration: 157
+    extracellular Na+ concentration: 96
     extracellular protein- concentration: 80.0
   ion profile: basic
   simulate extracellular spaces: true
@@ -372,18 +372,18 @@ tissue profile definition:
   tissue:
     default:
       diffusion constants:
-        Dm_Ca: 3.7000000000000003e-17
-        Dm_Cl: 3.7000000000000003e-17
-        Dm_K: 3.539541821348595e-17
-        Dm_M: 3.7000000000000003e-17
-        Dm_Na: 5.155998983462953e-17
+        Dm_Ca: 7.0e-18
+        Dm_Cl: 7.0e-18
+        Dm_K: 8.905115479474683e-18
+        Dm_M: 7.0e-18
+        Dm_Na: 6.083618936937509e-18
         Dm_P: 0
       image: geo/circle/circle_base.png
       name: Base
     profiles:
     - cell targets:
         color: ff0000
-        image: geo/circle/poles.png
+        image: geo/circle/spot.png
         indices:
         - 3
         - 14
@@ -393,11 +393,11 @@ tissue profile definition:
         percent: 50
         type: image
       diffusion constants:
-        Dm_Ca: 3.7000000000000003e-17
-        Dm_Cl: 3.7000000000000003e-17
-        Dm_K: 3.539541821348595e-17
-        Dm_M: 3.7000000000000003e-17
-        Dm_Na: 1.909629253134427e-18
+        Dm_Ca: 7.0e-18
+        Dm_Cl: 7.0e-18
+        Dm_K: 1.8700742506896836e-16
+        Dm_M: 7.0e-18
+        Dm_Na: 6.083618936937509e-18
         Dm_P: 0.0
       insular: false
       name: Spot
