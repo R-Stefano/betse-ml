@@ -12,7 +12,7 @@ RUN wget https://bootstrap.pypa.io/get-pip.py
 RUN python3 get-pip.py
 
 # Install libraries
-RUN pip install pyyaml pandas google-cloud-storage
+RUN pip install pyyaml Pillow pandas google-cloud-storage scipy dill matplotlib ruamel_yaml
 
 RUN echo 'export PATH="~/.local/lib/python3.7/site-packages/:$PATH"' > ~/.bashrc
 
