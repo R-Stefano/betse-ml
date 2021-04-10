@@ -241,7 +241,7 @@ def sample_intervantion_params():
     int_end = int_s + random.sample([i + 1 for i in range(max_duration)], 1)[0]
 
     freq_change = random.sample([0.1, 0.5, 1.0], 1)[0]
-    change_multiplier = random.sample([1.0, 2.0, 5.0, 10.0, 15.0, 20.0, 25.0], 1)[0]
+    change_multiplier = random.sample([1.0, 2.0, 5.0, 10.0, 15.0, 20.0, 25.0, 50.0, 100.0, 500.0, 1000.0], 1)[0]
 
     return int_s, int_end, freq_change, change_multiplier
 

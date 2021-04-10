@@ -14,7 +14,7 @@ initialization_duration_s = 10.01 # 60.01
 initialization_sampling_rate = 5 #simulation_duration_s - 0.01
 
 simulation_timestep = 1.0e-3
-simulation_duration_s = 10.01 # 60.01
+simulation_duration_s = 30.01 # 60.01
 simulation_sampling_rate = 5 #simulation_duration_s - 0.01
 
 sampleConcentrations = True
