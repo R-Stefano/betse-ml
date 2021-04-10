@@ -109,7 +109,7 @@ def test():
     configs.MIN_SIM_RUNS = 2
     configs.MAX_SIM_RUNS = 5
     configs.initialization_duration_s = 10.01 # 60.0
-    configs.simulation_duration_s = 10.01 # 60.0
+    configs.simulation_duration_s = 30.01 # 60.0
     configs.useCloud = False
 
     configs.sampleConcentrations = False
