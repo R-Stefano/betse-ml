@@ -229,7 +229,7 @@ def sampleConcentration(drasticChange):
 def sample_diffusion_parameter():
     defaultDiffusion = 1.0e-18
 
-    sampledDiffusion = defaultDiffusion * (random.randint(1, 200) - 100) # 1.0e-16 to 1.0e-20
+    sampledDiffusion = abs(defaultDiffusion * (random.randint(1, 200) - 100)) # 1.0e-16 to 1.0e-20
     print("[SIM API] Sampling Diffusion Parameter: {}".format(sampledDiffusion))
 
     return sampledDiffusion
