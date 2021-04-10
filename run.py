@@ -9,11 +9,8 @@ TODO:
 '''
 import sys
 
-sys.path.append("./betse/")
-
 #ENV CONFIGURATIONS
 import random, os
-random.seed(0)
 
 print(sys.argv)
 

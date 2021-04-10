@@ -18,15 +18,20 @@ def init():
     with open('./generate/simulator/sim_config.yml', 'w') as outfile:
         yaml.dump(default_configs, outfile, default_flow_style=False)
 
-def sample_seed_config():
+def sample_seed_config(configs):
     '''
     Called to sample different configs for the seed phase (phase 1)
     '''
 
-    extracellularNaConcentration = 1.0 #random.randint(1, 200)
-    extracellularKConcentration = 1.0 #random.randint(1, 200)
-    cytosolicNaConcentrationRatio = 200.0
-    cytosolicKConcentrationRatio = 1.0
+    if (configs.sampleConcentrations):
+        drasticChange = random.sample([True, False], 1)[0]
+        extracellularNaConcentration, cytosolicNaConcentrationRatio = sampleConcentration(drasticChange)
+        extracellularKConcentration, cytosolicKConcentrationRatio = sampleConcentration(not drasticChange)
+    else:
+        extracellularNaConcentration = 1.0
+        extracellularKConcentration = 1.0
+        cytosolicNaConcentrationRatio = 0.00001
+        cytosolicKConcentrationRatio = 1.0
 
     default_configs['general options']['customized ion profile']['extracellular Na+ concentration'] =  extracellularNaConcentration 
     default_configs['general options']['customized ion profile']['extracellular K+ concentration'] =  extracellularKConcentration
@@ -43,7 +48,7 @@ def sample_seed_config():
     with open('./generate/simulator/sim_config.yml', 'w') as outfile:
         yaml.dump(default_configs, outfile, default_flow_style=False)
         
-def sample_init_config():
+def sample_init_config(configs):
     '''
     Called to sample different configs for the init phase (phase 2)
     1. Sample default membran permeability parameter (1.0e-17 - 9.0e-18)
@@ -57,9 +62,15 @@ def sample_init_config():
         4. Set the sampled depolarization value to the profile selected membrane type permeability
     '''
 
-    defaultVmemPerm = sample_diffusion_parameter()
-    defaultNaVmemPerm = defaultVmemPerm * 0.1 #* random.uniform(0.5, 0.9)
-    defaultKVmemPerm = defaultVmemPerm  #* random.uniform(0.5, 0.9)
+    if (configs.sampleMemPermeabilities):
+        defaultVmemPerm = sample_diffusion_parameter()
+        defaultNaVmemPerm = defaultVmemPerm  * random.uniform(0.5, 1.5)
+        defaultKVmemPerm = defaultVmemPerm * random.uniform(0.5, 1.5)
+    else:
+        defaultVmemPerm = 1.0e-18
+        defaultNaVmemPerm = 1.0e-18
+        defaultKVmemPerm = 1.0e-18
+
     default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_Na'] = defaultNaVmemPerm  # Na+ membrane diffusion constant [m2/s]
     default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_K'] =  defaultKVmemPerm    # K+ membrane diffusion constant [m2/s]
     default_configs['tissue profile definition']['tissue']['default']['diffusion constants']['Dm_Cl'] = defaultVmemPerm    # Cl- membrane diffusion constant [m2/s]
@@ -75,18 +86,16 @@ def sample_init_config():
         'geo/circle/spot_1.png',
         'geo/circle/spot_2.png',
         'geo/circle/spot_3.png', 
+        'geo/circle/bottom_pole.png', 
+        'geo/circle/mini_spot.png',
+        'geo/circle/mini_wedge.png',
+        'geo/circle/poles.png',
+        'geo/circle/tissue_A.png',
+        'geo/circle/tissue_B.png',
+        'geo/circle/top_pole.png',
+        'geo/circle/wedge.png'
     ], 1)[0]
-    '''
-    NOT USING YET. POTENTIALLY LATER ON
-    'geo/circle/bottom_pole.png', 
-    'geo/circle/mini_spot.png',
-    'geo/circle/mini_wedge.png',
-    'geo/circle/poles.png',
-    'geo/circle/tissue_A.png',
-    'geo/circle/tissue_B.png',
-    'geo/circle/top_pole.png',
-    'geo/circle/wedge.png'
-    '''
+
     profile = {
         'name': 'Spot',
         'insular': False,
@@ -100,27 +109,29 @@ def sample_init_config():
         },
         'cell targets': {'type': 'image', 'color': 'ff0000', 'image': spotShape, 'indices': [3, 14, 15, 9, 265], 'percent': 50}
     }
-    vmemState = "depolarization"
-    multipliers = [i + 1 for i in range(20)]
-    if (vmemState == "depolarization"):
-        poolDepolarizations = []
-        for membraneType in ['Dm_Cl']:#['Dm_Na', 'Dm_K']:
-            for multiplier in multipliers:
-                if (membraneType in ["Dm_K", 'Dm_Cl']):
-                    #CLOSE
-                    poolDepolarizations.append({
-                        membraneType: profile['diffusion constants'][membraneType] / multiplier
-                    })
-                else:
-                    #OPEN
-                    poolDepolarizations.append({
-                        membraneType: profile['diffusion constants'][membraneType] * multiplier
-                    })
-        sampledDepolarization = random.sample(poolDepolarizations, 1)[0]
-        membraneType = list(sampledDepolarization.keys())[0]
-        print("Membrane {} changed from {} -> {}".format(membraneType, profile['diffusion constants'][membraneType], sampledDepolarization[membraneType]))
-        profile['diffusion constants'][membraneType] = sampledDepolarization[membraneType]
 
+    multipliers = [i + 1 for i in range(100)]
+    conditions = {
+        'depolarized': {
+            'Dm_Na': [defaultNaVmemPerm * multiplier for multiplier in multipliers], #OPEN
+            'Dm_K':  [defaultKVmemPerm / multiplier for multiplier in multipliers], #CLOSE
+        },
+        'hyperpolarized': {
+            'Dm_Na': [defaultNaVmemPerm / multiplier for multiplier in multipliers], #CLOSE
+            'Dm_K':  [defaultKVmemPerm * multiplier for multiplier in multipliers], #OPEN
+        },
+        'normal': {
+            'Dm_Na': [defaultNaVmemPerm],
+            'Dm_K': [defaultKVmemPerm]
+        }
+    }
+
+    spotCondition = random.sample(configs.possibleSpotStatus, 1)[0]
+    membraneTypeSelected = random.sample(list(conditions[spotCondition].keys()), 1)[0]
+    membraneValue = random.sample(conditions[spotCondition][membraneTypeSelected], 1)[0]
+
+    print("[SIM API] {} | Membrane {} changed from {} -> {}".format(spotCondition, membraneTypeSelected, profile['diffusion constants'][membraneTypeSelected], membraneValue))
+    profile['diffusion constants'][membraneTypeSelected] = membraneValue
     default_configs['tissue profile definition']['tissue']['profiles'] = [profile]
 
     with open('./generate/simulator/sim_config.yml', 'w') as outfile:
@@ -147,7 +158,6 @@ def sample_sim_config():
     ## Change the environmental concentration of Na
     changeNa = (sampledIntervantionType == 'Na') and globalInterventions
     if (changeNa):
-        print("\n\GLOBAL INTERVENTION NA\n\n")
         int_s, int_end, freq_change, change_multiplier = sample_intervantion_params()
         default_configs['change Na env']['change start'] = int_s            # sim time to start change [s]
         default_configs['change Na env']['change finish'] = int_end         # sim time to end change and return to original [s]
@@ -176,11 +186,23 @@ def sample_sim_config():
     changeNa = (sampledIntervantionType == 'Na') and targetedInterventions
     if (changeNa):
         int_s, int_end, freq_change, change_multiplier = sample_intervantion_params()
+        print("[SIM API] Sampled Targeted Na Intervention {} {} - {} {}".format(int_s, int_end, freq_change, change_multiplier))
         default_configs['change Na mem']['change start'] = int_s           # sim time to start change [s]
         default_configs['change Na mem']['change finish'] = int_end         # sim time to end change and return to original [s]
         default_configs['change Na mem']['change rate'] = freq_change            # rate of change [s]
         default_configs['change Na mem']['multiplier']= change_multiplier             # factor to multiply base level
     default_configs['change Na mem']['event happens'] = changeNa # turn the event on (True) or off (False)
+
+    ## Change k Perm for Spot selected
+    changek = (sampledIntervantionType == 'K') and targetedInterventions
+    if (changek):
+        int_s, int_end, freq_change, change_multiplier = sample_intervantion_params()
+        print("[SIM API] Sampled Targeted K Intervention {} {} - {} {}".format(int_s, int_end, freq_change, change_multiplier))
+        default_configs['change K mem']['change start'] = int_s           # sim time to start change [s]
+        default_configs['change K mem']['change finish'] = int_end         # sim time to end change and return to original [s]
+        default_configs['change K mem']['change rate'] = freq_change            # rate of change [s]
+        default_configs['change K mem']['multiplier']= change_multiplier             # factor to multiply base level
+    default_configs['change K mem']['event happens'] = changek # turn the event on (True) or off (False)
 
     with open('./generate/simulator/sim_config.yml', 'w') as outfile:
         yaml.dump(default_configs, outfile, default_flow_style=False)
@@ -189,6 +211,29 @@ def sample_sim_config():
 # --------------------------------------
 # INTERNAL FUNCTIONS
 # --------------------------------------
+def sampleConcentration(drasticChange):
+    magnitudes = [1, 2, 3, 4, 5, 6] # 10 - 1.000.000
+    extracellularConcentration = random.randint(1, 200)
+
+    if (drasticChange):
+        magnitude = 10 ** random.sample(magnitudes, 1)[0]
+    else:
+        magnitude = random.randint(1, 10)
+
+    ratio = 1 * magnitude if random.sample([True, False], 1)[0] else 1 / magnitude # 1e-6 - 1e6
+    cytosolicConcentration = ratio
+    print("[SIM API] Sampling Env & Cytosolic Concentrations: {} {}".format(extracellularConcentration, cytosolicConcentration))
+
+    return extracellularConcentration, cytosolicConcentration
+
+def sample_diffusion_parameter():
+    defaultDiffusion = 1.0e-18
+
+    sampledDiffusion = defaultDiffusion * (random.randint(1, 200) - 100) # 1.0e-16 to 1.0e-20
+    print("[SIM API] Sampling Diffusion Parameter: {}".format(sampledDiffusion))
+
+    return sampledDiffusion
+
 def sample_intervantion_params():
     # function used to sample the interventions params fo rthe different configs
     int_s = random.sample([i for i in range(int(configs.simulation_duration_s))], 1)[0]
@@ -200,7 +245,3 @@ def sample_intervantion_params():
 
     return int_s, int_end, freq_change, change_multiplier
 
-
-def sample_diffusion_parameter():
-    defaultDiffusion = 1.0e-18
-    return defaultDiffusion

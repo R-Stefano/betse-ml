@@ -2,6 +2,8 @@
 # --------------------( LICENSE                           )--------------------
 # Copyright 2014-2019 by Alexis Pietak & Cecil Curry.
 # See "LICENSE" for further details.
+import sys
+sys.path.append('/home/steve/Desktop/projects/ML_BETSE/')
 
 '''
 Main entry point of this application's command line interface (CLI).

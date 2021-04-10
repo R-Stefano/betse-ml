@@ -2450,7 +2450,6 @@ class Simulator(object):
 
         time_steps_sampled = set()
         print("[CUSTOM] Add timestep 0 to sampled timesteps (sim.py 2451)")
-        print("HELLO MOTHERFUCKER")
         time_steps_sampled.add(time_steps[0]) ## Add timestep 0
 
         i = 0

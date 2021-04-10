@@ -46,19 +46,18 @@ def run():
 
             simApi.init()
             run_start = time.time()
-            if (configs.sampleSeedPhase):
-                simApi.sample_seed_config()
+            simApi.sample_seed_config(configs)
 
-            os.system('python3 betse/__main__.py seed generate/simulator/sim_config.yml')
+            os.system('python3 betse seed generate/simulator/sim_config.yml')
             logger.write(">>SEED: took {:.2f} s\n".format(time.time() - run_start))
 
             #
             # INITIALIZATION
             #
             init_start = time.time()
-            if (configs.sampleInitPhase):
-                simApi.sample_init_config()
-            os.system('python3 betse/__main__.py init generate/simulator/sim_config.yml')
+            simApi.sample_init_config(configs)
+
+            os.system('python3 betse init generate/simulator/sim_config.yml')
             logger.write(">>INIT: took {:.2f} s\n".format(time.time() - init_start))
 
             #
@@ -72,8 +71,8 @@ def run():
                 simApi.sample_sim_config()
 
                 try:
-                    os.system('betse sim generate/simulator/sim_config.yml')
-                    os.system('betse plot sim generate/simulator/sim_config.yml') # Save sim results
+                    os.system('python3 betse sim generate/simulator/sim_config.yml')
+                    os.system('python3 betse plot sim generate/simulator/sim_config.yml') # Save sim results
                 except:
                     print("\n\n<<SIMUATION FAILED>>\n\n")
                 #
@@ -103,18 +102,22 @@ def test():
     import analysis.visualize as vis
     import matplotlib.pyplot as plt
     from collections import namedtuple
+    import random
+    random.seed(1)
 
     configs.SIM_RUNS = 1
-    configs.MIN_SIM_RUNS = 3
+    configs.MIN_SIM_RUNS = 2
     configs.MAX_SIM_RUNS = 5
     configs.initialization_duration_s = 10.01 # 60.0
     configs.simulation_duration_s = 10.01 # 60.0
     configs.useCloud = False
-    configs.sampleSeedPhase = True
-    configs.sampleInitPhase = True
-    configs.interventionTypes = ['Na'] # ['Na', 'K']
-    configs.targetedInterventions = False
+
+    configs.sampleConcentrations = False
+    configs.sampleMemPermeabilities = False
+    configs.possibleSpotStatus = ['hyperpolarized']#, 'depolarized'] 'normal', 
+    configs.interventionTypes = ['Na']#['Na', 'K']
     configs.globalInterventions = False
+    configs.targetedInterventions = True
 
     run()
     for folderName in os.listdir('storage/raw/'):
@@ -130,11 +133,6 @@ def test():
             default_configs = yaml.safe_load(stream)
 
         vmems = np.concatenate((Vmems, VmemsPred), axis=0)
-        for memPerm in default_configs['tissue profile definition']['tissue']['profiles'][0]['diffusion constants']:
-            memPermValue = default_configs['tissue profile definition']['tissue']['profiles'][0]['diffusion constants'][memPerm]
-            if (memPermValue not in [0, 1.0e-17]):
-                print("{} = {} | {:.4f} - {:.4f}".format(memPerm, memPermValue, np.min(vmems), np.max(vmems)))
-
         vis.display(Vmems, VmemsPred, cells)
         #plt.show()
         plt.savefig("storage/raw/" + folderName + '/vmems.png')
