@@ -17,4 +17,6 @@ RUN pip install pyyaml pandas google-cloud-storage
 RUN echo 'export PATH="~/.local/lib/python3.7/site-packages/:$PATH"' > ~/.bashrc
 
 WORKDIR betse-ml/
+COPY . .
+
 CMD python3 run.py generate
