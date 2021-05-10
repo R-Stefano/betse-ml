@@ -13,11 +13,19 @@ from google.cloud import storage
 storage_client = storage.Client()
 bucket = storage_client.bucket(configs.bucketName)
 
+import torch
+import train.torch_model as modelClass 
 def run():
     highEntropyExamplesOnly = False
-    modelVersion = 5
+    modelVersion = 7
     configs.modelName = "model_v{}.pth".format(modelVersion)
     configs.resultsFolder = "data_v{}".format(modelVersion)
+
+    model = modelClass.RNNNet(input_size = 15, configs_size = 14, output_size=150, hidden_state_size=512, num_layers=2, bidirectional=True)
+    #model = modelClass.MLP(input_size=264, output_size=250)
+    model.load_state_dict(torch.load("storage/" + configs.modelName, map_location=torch.device('cpu')))
+    configs.model = model
+
 
     resetFolders = input("Clean Folder? (y/n)")
     if (resetFolders == "y"):
@@ -63,20 +71,9 @@ def run():
         for filename in np.asarray(os.listdir('storage/validation'))[idxs]:
             examplesIDs.append(filename.split(".")[0])
 
-    #visualizeVmems(examplesIDs[:20])
-    validate(examplesIDs)
-    compare(['data_v{}'.format(version + 1) for version in range(modelVersion)])
-
-def compare(versions):
-    data = pd.DataFrame()
-    for versionName in versions:
-        dataVersion = pd.read_csv("analysis/{}/validate/simulations_matching_thresholds.csv".format(versionName))
-        dataVersion['version'] = versionName
-        data = data.append(dataVersion)
-
-    sns_plot = sns.relplot(x="threshold", y="percentage", hue="version", kind="line", data=data)
-    sns_plot.set(xlabel='Error Threshold', ylabel='Accuracy', title='Prediction Accuracy for different Error Thresholds')
-    sns_plot.savefig("analysis/{}/comparison.png".format(configs.resultsFolder))
+    visualizeVmems(examplesIDs[:1000])
+    #validate(examplesIDs)
+    #compare(['data_v{}'.format(version) for version in range(1, modelVersion + 1)])
 
 def visualizeVmems(exampleIDs):
     '''
@@ -89,15 +86,8 @@ def validate(exampleIDs):
     '''
 
     '''
-    import torch
-
-    import train.torch_model as modelClass 
-    # Open Vmems (Prediction)
-    model_PATH = "storage/" + configs.modelName
-    #model = modelClass.Net(280, 250)
-    model = modelClass.RNNNet(5, 30)
-    #model = torch.load(model_PATH)
-    model.load_state_dict(torch.load(model_PATH))
+    # Load Model
+    model = configs.model
 
     # Load Helper data
     with open("storage/data.betse", "rb") as f:
@@ -118,13 +108,12 @@ def validate(exampleIDs):
     for exampleID in exampleIDs:
         # Open Vmems (ground truth)
         x, confs, y = np.load('storage/validation/{}.npy'.format(exampleID), allow_pickle = True)
-        x = np.expand_dims(x, axis=0).astype(np.float32) 
-        confs = np.expand_dims(confs, axis=0).astype(np.float32) 
-        x = torch.from_numpy(x / 100)
-        confs = torch.from_numpy(confs)
+        
+        x, confs = configs.preprocess(x, confs)
 
         Vmems = y[:cellsNum]
-        VmemsPred = model(x, confs).cpu().detach().numpy().reshape(-1)[:cellsNum] * 100
+        VmemsPred = configs.postprocess(model(x, confs).cpu().detach().numpy()).reshape(-1)[:cellsNum] 
+
         results['simulation'].extend([exampleID.split("_")[0] for _ in range(Vmems.shape[0])])
         results['ID'].extend([exampleID for _ in range(Vmems.shape[0])])
         results['trueVmem'].extend(Vmems)
@@ -139,15 +128,16 @@ def validate(exampleIDs):
 
     #10 random examples per cell difference
     print(">> Cell-wise Vmem Distances (10 simulations) ")
-    simulationsSampled = simulations[:10]
-    sns_plot = sns.relplot(x="ID", y="distance", data=cellsVmemsDistances[cellsVmemsDistances['simulation'].isin(simulationsSampled)], height=10, aspect=2)
-    sns_plot.savefig("analysis/{}/validate/vmem_distances.png".format(configs.resultsFolder))
+    #simulationsSampled = simulations[:10]
+    #sns_plot = sns.relplot(x="ID", y="distance", data=cellsVmemsDistances[cellsVmemsDistances['simulation'].isin(simulationsSampled)], height=10, aspect=2)
+    #sns_plot.savefig("analysis/{}/validate/vmem_distances.png".format(configs.resultsFolder))
 
     print(">> Correlation Vmem True vs Predicted by value ")
     popSampled = cellsVmemsDistances.sample(populationSampled, random_state=1)
     sns_plot = sns.lmplot(x="trueVmem", y="predictedVmem", data=popSampled, height=10, aspect=2,  x_estimator=np.mean)
     minVmem = np.min(np.min(popSampled[["trueVmem", "predictedVmem"]]))
     maxVmem = np.max(np.max(popSampled[["trueVmem", "predictedVmem"]]))
+    print("Correlation value: {}".format(np.corrcoef(popSampled["trueVmem"], popSampled["predictedVmem"])[0, 1]))
     sns_plot.set(xlabel='True Vmem', ylabel='Predicted Vmem', title='Predicted Vmem Vs True Vmem')
     sns_plot.axes[0,0].set_xlim(minVmem + (minVmem * 0.1), maxVmem + (maxVmem * 0.1))
     sns_plot.axes[0,0].set_ylim(minVmem + (minVmem * 0.1), maxVmem + (maxVmem * 0.1))
@@ -178,16 +168,14 @@ def validate(exampleIDs):
     print(">> Prediction Accuracy Different Vmems Threshold 5")
     data = pd.DataFrame(cellsVmemsDistances['trueVmem']).astype(int)
     data['matching'] = cellsVmemsDistances['distance'] <= 5
-    sns_plot = sns.catplot(x="trueVmem", y="matching", data=data, kind="bar", height=10, aspect=2)
+    data['bin'] = data['trueVmem'] // 5
+    bins = [i for i in range(-18, 11)] # determiend -18 and 11 by -> data.groupby(['bin']).count()
+    data = data[data['bin'].isin(bins)] #remove data not in the bins selected
+    
+    sns_plot = sns.catplot(x="bin", y="matching", data=data, kind="bar", height=10, aspect=2)
+    sns_plot.set(xticklabels=["{} {}".format(binIdx * 5, (binIdx+1) * 5) for binIdx in bins])
     sns_plot.set(xlabel='True Vmem', ylabel='Accuracy', title='Prediction Accuracy for Vmem Values (Vmem Distance Threshold 5mV)')
     sns_plot.savefig("analysis/{}/validate/truevmem_vs_accuracy_thres_5.png".format(configs.resultsFolder))
-
-    print(">> Prediction Accuracy Different Vmems Threshold 1")
-    data = pd.DataFrame(cellsVmemsDistances['trueVmem']).astype(int)
-    data['matching'] = cellsVmemsDistances['distance'] <= 1
-    sns_plot = sns.catplot(x="trueVmem", y="matching", data=data, kind="bar", height=10, aspect=2)
-    sns_plot.set(xlabel='True Vmem', ylabel='Accuracy', title='Prediction Accuracy for Vmem Values (Vmem Distance Threshold 1mV)')
-    sns_plot.savefig("analysis/{}/validate/truevmem_vs_accuracy_thres_1.png".format(configs.resultsFolder))
 
 def visualizeVmemEvolution():
     exampleIdxs = [0, 4, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
@@ -211,3 +199,23 @@ def visualizeVmemEvolution():
 
     sns.lineplot(x="timestep", y="vmem", hue="runID", data=dataRuns)
     plt.show()
+
+def compare(versions):
+    versionNames = {
+        'data_v1': "MLP 7_512 MSE",
+        'data_v2': "LSTM 1_256 MSE",
+        'data_v3': "LSTM 1_256 XE",
+        'data_v4': "LSTM 2_256 XE",
+        'data_v5': "LSTM 2_256 FL",
+        'data_v6': "LSTM 2_512 FL",
+        'data_v7': "BiLSTM 2_512 FL"
+    }
+    data = pd.DataFrame()
+    for version in versions:
+        dataVersion = pd.read_csv("analysis/{}/validate/simulations_matching_thresholds.csv".format(version))
+        dataVersion['version'] = versionNames[version]
+        data = data.append(dataVersion)
+
+    sns_plot = sns.relplot(x="threshold", y="percentage", hue="version", kind="line", data=data)
+    sns_plot.set(xlabel='Error Cutoff', ylabel='Accuracy', title='')
+    sns_plot.savefig("analysis/{}/comparison.png".format(configs.resultsFolder))

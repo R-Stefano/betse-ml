@@ -172,13 +172,9 @@ def run(exampleIDs):
 
     '''
     import torch
-    import train.torch_model as modelClass 
-    # Open Vmems (Prediction)
-    model_PATH = "storage/" + configs.modelName
-    #model = modelClass.Net(280, 250)
-    model = modelClass.RNNNet(5, 30)
-    #model = torch.load(model_PATH)
-    model.load_state_dict(torch.load(model_PATH))
+
+    # Load Model
+    model = configs.model
 
     # Load Helper data
     with open("storage/data.betse", "rb") as f:
@@ -189,13 +185,11 @@ def run(exampleIDs):
     for exampleID in exampleIDs:
         # Open Vmems (ground truth)
         x, confs, y = np.load('storage/validation/{}.npy'.format(exampleID), allow_pickle = True)
-        x = np.expand_dims(x, axis=0).astype(np.float32) 
-        confs = np.expand_dims(confs, axis=0).astype(np.float32) 
-        x = torch.from_numpy(x / 100)
-        confs = torch.from_numpy(confs)
 
+        x, confs = configs.preprocess(x, confs)
+
+        VmemsPred = configs.postprocess(model(x, confs).cpu().detach().numpy()).reshape(-1)[:cellsNum] 
         Vmems = y[:cellsNum]
-        VmemsPred = model(x, confs).cpu().detach().numpy().reshape(-1)[:cellsNum] * 100
 
         #print("X {} | Y {}".format(x.shape, y.shape))
         #print("Cells Verts", cells.cell_verts.shape)
@@ -208,3 +202,4 @@ def run(exampleIDs):
         #plt.show()
         plt.savefig('analysis/{}/visualize/vmem_visualize_{}.png'.format(configs.resultsFolder, exampleID))
         plt.cla()
+        plt.close()

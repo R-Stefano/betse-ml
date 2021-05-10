@@ -51,7 +51,6 @@ if (answer.lower() == "y" or 'train' in sys.argv):
     
 answer = "n" #input("Start Visualize? (y/n)")
 if (answer.lower() == "y" or 'visualize' in sys.argv):
-    import train#.torch_model as model
 
     import analysis
     analysis.run()
